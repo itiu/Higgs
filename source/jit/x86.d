@@ -663,10 +663,20 @@ void writeRMInstr(
         break;
 
         case X86Opnd.Kind.MEM:
-        if (rmOpnd is 'l')
-            rmOpndM = &opnd0.mem;
-        else
-            assert (false);
+            
+        version (assert)
+        {
+        	if (rmOpnd is 'l')
+            	rmOpndM = &opnd0.mem;
+        	else
+            	assert (false);
+        }
+		else
+        {
+        	if (rmOpnd is 'l')
+           		rmOpndM = &opnd0.mem;
+        }
+        
         break;
 
         default:
@@ -683,10 +693,18 @@ void writeRMInstr(
         break;
 
         case X86Opnd.Kind.MEM:
-        if (rmOpnd is 'r')
-            rmOpndM = &opnd1.mem;
-        else
-            assert (false, "mem opnd but right-opnd is not r/m");
+       version (assert)
+        {
+        	if (rmOpnd is 'r')
+            	rmOpndM = &opnd1.mem;
+        	else
+            	assert (false, "mem opnd but right-opnd is not r/m");
+         }
+         else
+         {
+        	if (rmOpnd is 'r')
+            	rmOpndM = &opnd1.mem;
+         }
         break;
 
         case X86Opnd.Kind.NONE:

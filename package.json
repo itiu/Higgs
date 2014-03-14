@@ -1,0 +1,20 @@
+{
+	"name": "higgs",
+	"targetType": "library",
+	"description": "A JIT compiler for JavaScript targetting x86-64 platforms.",
+	"homepage": "http://github.com/maximecb/Higgs",
+	"authors": ["Maxime Chevalier-Boisvert"],
+	"license": "Modified BSD License",
+	"buildOptions": ["releaseMode", "optimize", "inline", "noBoundsCheck", "debugInfo", "warnings"],
+	"libs" : [ "dl" ],
+	"stringImportPaths" : ["source"], 
+	"sourceFiles":[ 
+			"source/util/error.d", "source/util/id.d", "source/util/string.d", "source/util/misc.d", "source/util/bitset.d", 
+			"source/parser/lexer.d", "source/parser/ast.d", "source/parser/vars.d", "source/parser/parser.d", "source/ir/ir.d", 
+			"source/ir/ops.d", "source/ir/iir.d", "source/ir/ast.d", "source/ir/peephole.d", "source/ir/slotalloc.d", 
+			"source/ir/livevars.d", "source/ir/inlining.d", "source/ir/typeprop.d", "source/runtime/vm.d", "source/runtime/layout.d", 
+			"source/runtime/string.d", "source/runtime/object.d", "source/runtime/gc.d", "source/jit/x86.d", "source/jit/codeblock.d", 
+			"source/jit/util.d", "source/jit/moves.d", "source/jit/ops.d", "source/jit/jit.d", "source/repl.d", "source/options.d", 
+			"source/stats.d"
+		     ]
+}
