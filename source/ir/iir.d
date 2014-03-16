@@ -54,7 +54,7 @@ Table of inlinable IR instructions (usable in library code)
 Opcode*[string] iir;
 
 /// Initialize the inline IR table
-static this()
+shared static this()
 {
     void addOp(ref Opcode op, string opName = null)
     { 

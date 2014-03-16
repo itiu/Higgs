@@ -3788,7 +3788,7 @@ void gen_get_sym(
 // Mappings for arguments/return values
 Type[string] typeMap;
 size_t[string] sizeMap;
-static this()
+shared static this()
 {
     typeMap = [
         "i8" : Type.INT32,

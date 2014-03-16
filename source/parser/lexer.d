@@ -212,7 +212,7 @@ wstring [] keywords = [
 Static module constructor to initialize the
 separator, keyword and operator tables
 */
-static this()
+shared static this()
 {
     // Sort the tables by decreasing string length
     sort!("a.str.length > b.str.length")(operators);

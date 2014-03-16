@@ -87,7 +87,7 @@ ulong* getTypeTestCtr(string testOp)
 }
 
 /// Static module constructor
-static this()
+shared static this()
 {
     // Pre-register type test counters
     getTypeTestCtr("is_i32");
@@ -102,7 +102,7 @@ static this()
 }
 
 /// Static module destructor, log the accumulated stats
-static ~this()
+shared static ~this()
 {
     // If stats not enabled, stop
     if (opts.stats is false)

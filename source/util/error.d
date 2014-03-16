@@ -63,7 +63,7 @@ void customAssertHandler(string file = __FILE__, size_t line = __LINE__, string 
     throw new AssertError(msg, file, line);
 }
 
-static this()
+shared static this()
 {
     assertHandler = &customAssertHandler;
 }
