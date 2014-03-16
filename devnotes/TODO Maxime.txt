@@ -42,9 +42,6 @@ TODO: think about shapes more
 TODO: not missing global prop opt?
 - observation: if read once, we know its not missing
 
-TODO: blog post about optimization, results
-- difficulty of optimizing self-hosted code
-
 FIXME: much regexp code executed during init, why?
 
 TODO: tweak inlining heuristics
@@ -68,9 +65,7 @@ FIXME: empty fun, ret undefined twice
 Goal: March 31st, type prop working, satisfying perf for article
 - Type prop should enable speed gains on bigger benchmarks
 
-TODO: getPropMethod
-
-TODO: try quickly hacked inline caches
+TODO: smaller version of toBool for inlining?
 
 TODO: profile again, lots of interesting things to learn!
 
@@ -88,37 +83,6 @@ TODO: simple reg alloc
 TODO: eliminate is_i32 peephole
 - let the type analysis and BBV take care of that
 
-TODO: basic type prop & type test removal
-- For now, don't do delayed writes, always just write type tags
-- isTypeOp, handle constant types
-
-Meeting:
-- Fixed codegen bugs outlined at last group meeting
-  - suboptimal direct jump
-- Completed wider type tags refactoring
-  - Fixed bugs, added more tests
-- Began smaller primitives for inlining
-  - specialized getPropField, getPropElem, getPropLength
-  - addInt (++), addIntFloat
-  - ltIntFloat
-- 3d-raytrace
-  - primitive calls: 16.6M to 1.37M         *** update number
-  - code size: 937K to 1092K                *** update number
-  - 37M type tests, most of them is_i32
-  - eliminated >75% tests on this, should make noticeable perf difference
-  - new tag scheme will also eliminate is_object, is_array, is_string
-- Opinion: is_i32 peephole, keep or remove?
-  - Removes trivial type tests at the IR level
-  - Reduces what the type analysis can eliminate somewhat (makes us look better)
-- Ran DMD's profiler
-  - liveness analysis is slow, quadratic
-  - getProp makes > 30% of exec time
-
-TODO: smaller version of toBool for inlining?
-
-TODO: getPropIdx, try caching 4 entries in a given map, for fun!
-- see impact on 3d-raytrace time
-
 TODO: command-line option to record primitive call frequency
 - display sorted count
 - only way to know what's relevant to optimize
@@ -131,17 +95,51 @@ TODO: try to optimize inlineCall
 TODO: try to optimize liveness analysis
 - record total time taken in stats
 
-TODO: check that we're measuring comp time properly
+Meeting:
+- Fixed codegen bugs outlined at last group meeting
+  - suboptimal direct jump
+- Completed wider type tags refactoring
+  - Fixed bugs, added more tests
+- Added back stats for number of block versions
+- Began smaller primitives for inlining
+  - getPropField, getPropMethod, getPropElem, getPropLength
+  - addInt (++), addIntFloat
+  - ltIntFloat
+  - fallback to old, complete primitives
+- 3d-raytrace
+  - primitive calls: 16.6M to 1.25M         *** update number
+  - code size: 937K to 1160K                *** update number
+  - 37M type tests, most of them is_i32
+  - compilation time now about 60% of total time
+  - something a 
+- BBV eliminates >75% tests on 3d-raytrace, should make noticeable perf difference
+  - new tag scheme will also eliminate is_object, is_array, is_string
+  - but: block versioning will increase compilation time
+  - can we exclude compile time for the paper?
+- Opinion: is_i32 peephole, keep or remove?
+  - Removes trivial type tests at the IR level
+  - Reduces what the type analysis can eliminate somewhat (makes us look better)
+- Ran DMD's profiler
+  - liveness analysis is slow, quadratic
+  - getProp makes > 30% of exec time
+- Implemented basic inline caching, 23% speedup on 3d-raytrace
 
-TODO: runtime.string.extractWStr(ubyte*) is taking a lot of time
-- what calls this? 610K calls???
-time ./higgs benchmarks/sunspider/3d-raytrace.js 
-real	0m1.123s
-- getPropIdx calls this! This takes the bulk of the time.
-- To optimize getProp, we need to avoid using JS strings?
-- Can generate an optimized getPropIdx
-  - Pass a pointer to the D string from the string constant if known
-- Give the maps a 64-bit id as you do for instrs, have one cache slot
+TODO: basic type prop & type test removal
+- For now, don't do delayed writes, always just write type tags
+- isTypeOp, handle constant types
+
+TODO: blog post about optimization, results
+- 200 stars on github???
+- difficulty of optimizing self-hosted code
+- profiling, you don't actually know what's going on, complex codebase
+- 3d-raytrace, prop access > 30% execution time
+
+FIXME: string-fasta is slower than before? fast compile time, profile this ***
+
+TODO: total time vs exec time in stats
+
+FIXME: getPropIdx runs for every global call????? noooo
+- verify this with a loop that calls print
 
 
 
@@ -152,7 +150,43 @@ real	0m1.123s
 
 
 
+[DONE] TODO: getPropMethod
+make; ./higgs --stats benchmarks/sunspider/3d-raytrace.js
+- before:
+    exec time (ms): 846
+    comp time (ms): 388
+    code size (bytes): 1111224
+    num call_prim: 1369740
+- after:
+    exec time (ms): 1003
+    comp time (ms): 608
+    code size (bytes): 1160565
+    num call_prim: 1250309
+- compilation time now really dominates
+- exec time went down but total time went up!
 
+[DONE] FIXME: map_prop_idx produces idx 0
+- obj proto map id is 0!
+
+[DONE] FIXME: exceptions thrown by eval can't be caught in JS
+
+[DONE] TODO: stat for all version counts, 1 version, 2 versions, ...
+- Can compute this incrementally
+- When going from 3 to 4 versions, remove 1 from 3, add to 4
+
+[DONE] TODO: num blocks vs num versions stat, remove num instances
+
+[DONE] TODO: compare ./benchmark.py times to CC2014 branch, to show Marc
+- Much faster on some benchmarks, but slower in others
+- Compilation time seems to be the problem
+
+[DONE] TODO: check that we're measuring comp time properly
+
+[DONE] TODO: specialized getPropIdx with basic inline caching
+time ./higgs benchmarks/sunspider/3d-raytrace.js    real 1.123s
+time ./higgs benchmarks/sunspider/3d-raytrace.js    real 0.869s
+- Pass a pointer to the D string from the string constant if known
+- Give the maps a 64-bit id as you do for instrs, have a few cache slots (4?)
 
 [DONE] FIXME: block.getName, CodeFragment.getName called when not generating ASM?
 
