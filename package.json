@@ -14,7 +14,8 @@
 			"source/ir/ops.d", "source/ir/iir.d", "source/ir/ast.d", "source/ir/peephole.d", "source/ir/slotalloc.d", 
 			"source/ir/livevars.d", "source/ir/inlining.d", "source/ir/typeprop.d", "source/runtime/vm.d", "source/runtime/layout.d", 
 			"source/runtime/string.d", "source/runtime/object.d", "source/runtime/gc.d", "source/jit/x86.d", "source/jit/codeblock.d", 
-			"source/jit/util.d", "source/jit/moves.d", "source/jit/ops.d", "source/jit/jit.d", "source/repl.d", "source/options.d", 
+			"source/jit/util.d", "source/jit/moves.d", "source/jit/ops.d", "source/jit/jit.d", "source/options.d", 
 			"source/stats.d"
-		     ]
+		     ],
+	"excludedSourceFiles" : ["source/main.d", "source/repl.d"]
 }
