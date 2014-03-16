@@ -41,6 +41,7 @@ import std.stdio;
 import std.string;
 import std.conv;
 import ir.ops;
+import ext;
 
 /**
 Inline IR prefix string
@@ -208,5 +209,7 @@ static this()
     addOp(CLOSE_LIB);
     addOp(GET_SYM);
     addOp(CALL_FFI);
+
+    addOp(SEND_2STR_RECIEVE_1STR);
 }
 

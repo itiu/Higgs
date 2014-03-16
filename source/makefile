@@ -15,6 +15,7 @@ LIB_DIR = /etc/higgs
 
 # Source files
 SRC =               \
+ext.d        \
 util/error.d        \
 util/id.d           \
 util/string.d       \
