@@ -1086,6 +1086,35 @@ class VM
         return exec(ir);
     }
 
+    ValuePair exec(EntryFn entryFn)
+    {
+        // Call into the compiled code
+        entryFn();
+
+        // If a runtime error occurred, throw the exception object
+        if (runError)
+        {
+            auto error = runError;
+            runError = null;
+            throw error;
+        }
+
+        // Ensure the stack contains at least one value
+        assert (
+            stackSize() >= 1,
+            "stack is empty, no return value found"
+        );
+
+        // Get the return value
+        auto retVal = ValuePair(*wsp, *tsp); 
+
+        // Pop the return value off the stack
+        pop(1);
+
+        return retVal;
+    }
+
+
     /**
     Get the path for a load command based on a (potentially relative) path
     */
@@ -1123,6 +1152,23 @@ class VM
         auto result = exec(ast);
 
         return result;
+    }
+
+    /**
+    Parse source string
+    */
+    public EntryFn parseAndCompileString(string input, string fileName = "string")
+    {
+        //writefln("input: %s", input);
+        auto pfun = parser.parser.parseString(clx, input, fileName);
+        auto fun = astToIR(this, pfun);
+        // Register this function in the function reference set
+        funRefs[cast(void*)fun] = fun;
+
+        // Compile the entry block of the unit function
+        auto entryFn = compileUnit(this, fun);
+        
+        return entryFn;
     }
 
     /// Stack frame visit function
