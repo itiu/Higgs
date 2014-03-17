@@ -78,99 +78,118 @@ const int COMMA_PREC = 0;
 // In operator precedence
 const int IN_PREC = 9;
 
+class CommonLexer
+{
 /**
 Operator table
 */
-OpInfo[] operators = [
-
-    // Member operator
-    { "."w, 2, 16, 'l' },
-
-    // Array indexing
-    { "["w, 1, 16, 'l' },
-
-    // New/constructor operator
-    { "new"w, 1, 16, 'r' },
-
-    // Function call
-    { "("w, 1, 15, 'l' },
-
-    // Postfix unary operators
-    { "++"w, 1, 14, 'l' },
-    { "--"w, 1, 14, 'l' },
-
-    // Prefix unary operators
-    { "+"w , 1, 13, 'r' },
-    { "-"w , 1, 13, 'r' },
-    { "!"w , 1, 13, 'r' },
-    { "~"w , 1, 13, 'r' },
-    { "++"w, 1, 13, 'r' },
-    { "--"w, 1, 13, 'r' },
-    { "typeof"w, 1, 13, 'r' },
-    { "delete"w, 1, 13, 'r' },
-
-    // Multiplication/division/modulus
-    { "*"w, 2, 12, 'l' },
-    { "/"w, 2, 12, 'l', true },
-    { "%"w, 2, 12, 'l', true },
-
-    // Addition/subtraction
-    { "+"w, 2, 11, 'l' },
-    { "-"w, 2, 11, 'l', true },
-
-    // Bitwise shift
-    { "<<"w , 2, 10, 'l' },
-    { ">>"w , 2, 10, 'l' },
-    { ">>>"w, 2, 10, 'l' },
-
-    // Relational operators
-    { "<"w         , 2, IN_PREC, 'l' },
-    { "<="w        , 2, IN_PREC, 'l' },
-    { ">"w         , 2, IN_PREC, 'l' },
-    { ">="w        , 2, IN_PREC, 'l' },
-    { "in"w        , 2, IN_PREC, 'l' },
-    { "instanceof"w, 2, IN_PREC, 'l' },
-
-    // Equality comparison
-    { "=="w , 2, 8, 'l' },
-    { "!="w , 2, 8, 'l' },
-    { "==="w, 2, 8, 'l' },
-    { "!=="w, 2, 8, 'l' },
-
-    // Bitwise operators
-    { "&"w, 2, 7, 'l' },
-    { "^"w, 2, 6, 'l' },
-    { "|"w, 2, 5, 'l' },
-
-    // Logical operators
-    { "&&"w, 2, 4, 'l' },
-    { "||"w, 2, 3, 'l' },
-
-    // Ternary conditional
-    { "?"w, 3, 2, 'r' },
-
-    // Assignment
-    { "="w   , 2, 1, 'r' },
-    { "+="w  , 2, 1, 'r' },
-    { "-="w  , 2, 1, 'r' },
-    { "*="w  , 2, 1, 'r' },
-    { "/="w  , 2, 1, 'r' },
-    { "%="w  , 2, 1, 'r' },
-    { "&="w  , 2, 1, 'r' },
-    { "|="w  , 2, 1, 'r' },
-    { "^="w  , 2, 1, 'r' },
-    { "<<="w , 2, 1, 'r' },
-    { ">>="w , 2, 1, 'r' },
-    { ">>>="w, 2, 1, 'r' },
-
-    // Comma (sequencing), least precedence
-    { ","w, 2, COMMA_PREC, 'l' },
-];
+private OpInfo[] operators;
 
 /**
 Separator tokens
 */
-wstring[] separators = [
+private wstring[] separators;
+
+/**
+Keyword tokens
+*/
+private wstring [] keywords;
+
+/**
+class constructor to initialize the
+separator, keyword and operator tables
+*/
+this()
+{
+	writeln ("new CommonLexer");
+	
+ operators = [
+
+    // Member operator
+    OpInfo( "."w, 2, 16, 'l' ),
+
+    // Array indexing
+    OpInfo( "["w, 1, 16, 'l' ),
+
+    // New/constructor operator
+    OpInfo( "new"w, 1, 16, 'r' ),
+
+    // Function call
+    OpInfo( "("w, 1, 15, 'l' ),
+
+    // Postfix unary operators
+    OpInfo( "++"w, 1, 14, 'l' ),
+    OpInfo( "--"w, 1, 14, 'l' ),
+
+    // Prefix unary operators
+    OpInfo( "+"w , 1, 13, 'r' ),
+    OpInfo( "-"w , 1, 13, 'r' ),
+    OpInfo( "!"w , 1, 13, 'r' ),
+    OpInfo( "~"w , 1, 13, 'r' ),
+    OpInfo( "++"w, 1, 13, 'r' ),
+    OpInfo( "--"w, 1, 13, 'r' ),
+    OpInfo( "typeof"w, 1, 13, 'r' ),
+    OpInfo( "delete"w, 1, 13, 'r' ),
+
+    // Multiplication/division/modulus
+    OpInfo( "*"w, 2, 12, 'l' ),
+    OpInfo( "/"w, 2, 12, 'l', true ),
+    OpInfo( "%"w, 2, 12, 'l', true ),
+
+    // Addition/subtraction
+    OpInfo( "+"w, 2, 11, 'l' ),
+    OpInfo( "-"w, 2, 11, 'l', true ),
+
+    // Bitwise shift
+    OpInfo( "<<"w , 2, 10, 'l' ),
+    OpInfo( ">>"w , 2, 10, 'l' ),
+    OpInfo( ">>>"w, 2, 10, 'l' ),
+
+    // Relational operators
+    OpInfo( "<"w         , 2, IN_PREC, 'l' ),
+    OpInfo( "<="w        , 2, IN_PREC, 'l' ),
+    OpInfo( ">"w         , 2, IN_PREC, 'l' ),
+    OpInfo( ">="w        , 2, IN_PREC, 'l' ),
+    OpInfo( "in"w        , 2, IN_PREC, 'l' ),
+    OpInfo( "instanceof"w, 2, IN_PREC, 'l' ),
+
+    // Equality comparison
+    OpInfo( "=="w , 2, 8, 'l' ),
+    OpInfo( "!="w , 2, 8, 'l' ),
+    OpInfo( "==="w, 2, 8, 'l' ),
+    OpInfo( "!=="w, 2, 8, 'l' ),
+
+    // Bitwise operators
+    OpInfo( "&"w, 2, 7, 'l' ),
+    OpInfo( "^"w, 2, 6, 'l' ),
+    OpInfo( "|"w, 2, 5, 'l' ),
+
+    // Logical operators
+    OpInfo( "&&"w, 2, 4, 'l' ),
+    OpInfo( "||"w, 2, 3, 'l' ),
+
+    // Ternary conditional
+    OpInfo( "?"w, 3, 2, 'r' ),
+
+    // Assignment
+    OpInfo( "="w   , 2, 1, 'r' ),
+    OpInfo( "+="w  , 2, 1, 'r' ),
+    OpInfo( "-="w  , 2, 1, 'r' ),
+    OpInfo( "*="w  , 2, 1, 'r' ),
+    OpInfo( "/="w  , 2, 1, 'r' ),
+    OpInfo( "%="w  , 2, 1, 'r' ),
+    OpInfo( "&="w  , 2, 1, 'r' ),
+    OpInfo( "|="w  , 2, 1, 'r' ),
+    OpInfo( "^="w  , 2, 1, 'r' ),
+    OpInfo( "<<="w , 2, 1, 'r' ),
+    OpInfo( ">>="w , 2, 1, 'r' ),
+    OpInfo( ">>>="w, 2, 1, 'r' ),
+
+    // Comma (sequencing), least precedence
+    OpInfo( ","w, 2, COMMA_PREC, 'l' )
+];
+
+ separators = [
     ","w,
     ":"w,
     ";"w,
@@ -182,10 +201,7 @@ wstring[] separators = [
     "}"w
 ];
 
-/**
-Keyword tokens
-*/
-wstring [] keywords = [
+ keywords = [
     "var"w,
     "function"w,
     "if"w,
@@ -208,12 +224,8 @@ wstring [] keywords = [
     "null"w
 ];
 
-/**
-Static module constructor to initialize the
-separator, keyword and operator tables
-*/
-shared static this()
-{
+
+
     // Sort the tables by decreasing string length
     sort!("a.str.length > b.str.length")(operators);
     sort!("a.length > b.length")(separators);
@@ -243,6 +255,338 @@ Operator findOperator(wstring op, int arity = 0, char assoc = '\0')
 
     return null;
 }
+
+/**
+Get the first token from a stream
+*/
+Token getToken(ref StrStream stream, LexFlags flags)
+{
+    wchar ch;
+
+    // Consume whitespace and comments
+    for (;;)
+    {
+        ch = stream.peekCh();
+
+        // Whitespace characters
+        if (whitespace(ch))
+        {
+            stream.readCh();
+        }
+
+        // Single-line comment
+        else if (stream.match("//"))
+        {
+            for (;;)
+            {
+                ch = stream.readCh();
+                if (ch == '\n' || ch == '\0')
+                    break;
+            }
+        }
+
+        // Multi-line comment
+        else if (stream.match("/*"))
+        {
+            for (;;)
+            {
+                if (stream.match("*/"))
+                    break;
+                if (stream.peekCh() == '\0')
+                    return Token(
+                        Token.ERROR,
+                        "end of stream in multi-line comment", 
+                        stream.getPos()
+                    );
+                ch = stream.readCh();
+            }
+        }
+
+        // Otherwise
+        else
+        {
+            break;
+        }
+    }
+
+    // Get the position at the start of the token
+    SrcPos pos = stream.getPos();
+
+    // Number
+    if (digit(ch))
+    {
+        // Hexadecimal number
+        if (stream.match("0x"))
+        {
+            enum hexRegex = ctRegex!(`^[0-9|a-f|A-F]+`w);
+            auto m = stream.match(hexRegex);
+
+            if (m.empty)
+            {
+                return Token(
+                    Token.ERROR,
+                    "invalid hex number", 
+                    pos
+                );
+            }
+
+            auto hexStr = m.captures[0];
+            long val;
+            formattedRead(hexStr, "%x", &val);
+
+            return Token(Token.INT, val, pos);
+        }
+
+        // Octal number
+        if (ch == '0')
+        {
+            enum octRegex = ctRegex!(`^0([0-7]+)`w);
+
+            auto m = stream.match(octRegex);
+            if (!m.empty) 
+            {
+                auto octStr = m.captures[1];
+                long val;
+                formattedRead(octStr, "%o", &val);
+                return Token(Token.INT, val, pos);
+            }
+        }
+
+        enum fpRegex = ctRegex!(`^[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?`w);
+
+        auto m = stream.match(fpRegex);
+        assert (m.empty == false);
+        auto numStr = m.captures[0];
+
+        // If this is a floating-point number
+        if (countUntil(numStr, '.') != -1 ||
+            countUntil(numStr, 'e') != -1 ||
+            countUntil(numStr, 'E') != -1)
+        {
+            double val = to!(double)(numStr);
+            return Token(Token.FLOAT, val, pos);
+        }
+
+        // Integer number
+        else
+        {
+            long val = to!(long)(numStr);
+            return Token(Token.INT, val, pos);
+        }
+    }
+
+    // String constant
+    if (ch == '"' || ch == '\'')
+    {
+        auto openChar = stream.readCh();
+
+        wstring str = "";
+
+        // Until the end of the string
+        for (;;)
+        {
+            ch = stream.readCh();
+
+            if (ch == openChar)
+            {
+                break;
+            }
+
+            // End of file
+            else if (ch == '\0')
+            {
+                return Token(
+                    Token.ERROR,
+                    "EOF in string literal",
+                    stream.getPos()
+                );
+            }
+
+            // End of line
+            else if (ch == '\n')
+            {
+                return Token(
+                    Token.ERROR,
+                    "newline in string literal",
+                    stream.getPos()
+                );
+            }
+
+            // Escape sequence
+            else if (ch == '\\')
+            {
+                auto escCh = readEscape(stream);
+                if (escCh != -1)
+                    str ~= escCh;
+            }
+
+            // Normal character
+            else
+            {
+                str ~= ch;
+            }
+        }
+
+        return Token(Token.STRING, str, pos);
+    }
+
+    // Quasi literal
+    if (ch == '`')
+    {
+        // TODO: full support for quasi-literals
+        // for now, quasis are only multi-line strings
+
+        // Read the opening ` character
+        auto openChar = stream.readCh();
+
+        wstring str = "";
+
+        // Until the end of the string
+        for (;;)
+        {
+            ch = stream.readCh();
+
+            if (ch == openChar)
+            {
+                break;
+            }
+
+            // End of file
+            else if (ch == '\0')
+            {
+                return Token(
+                    Token.ERROR,
+                    "EOF in string literal",
+                    stream.getPos()
+                );
+            }
+
+            // Escape sequence
+            else if (ch == '\\')
+            {
+                auto escCh = readEscape(stream);
+                if (escCh != -1)
+                    str ~= escCh;
+            }
+
+            // Normal character
+            else
+            {
+                str ~= ch;
+            }
+        }
+
+        return Token(Token.STRING, str, pos);
+    }
+
+    // End of file
+    if (ch == '\0')
+    {
+        return Token(Token.EOF, pos);
+    }
+
+    // Identifier or keyword
+    if (identStart(ch))
+    {
+        stream.readCh();
+        wstring identStr = ""w ~ ch;
+
+        for (;;)
+        {
+            ch = stream.peekCh();
+            if (identPart(ch) == false)
+                break;
+            stream.readCh();
+            identStr ~= ch;
+        }
+
+        // Try matching all keywords
+        if (countUntil(keywords, identStr) != -1)
+            return Token(Token.KEYWORD, identStr, pos);
+
+        // Try matching all operators
+        foreach (op; operators)
+            if (identStr == op.str)
+                return Token(Token.OP, identStr, pos);
+
+        return Token(Token.IDENT, identStr, pos);
+    }
+
+    // Regular expression
+    if ((flags & LEX_MAYBE_RE) && ch == '/')
+    {
+        // Read the opening slash
+        stream.readCh();
+
+        // Read the pattern
+        wstring reStr = "";
+        for (;;)
+        {
+            ch = stream.readCh();
+
+            if (ch == '\\' && stream.peekCh() == '/')
+            {
+                stream.readCh();
+                reStr ~= "\\/"w;
+                continue;
+            }
+
+            if (ch == '/')
+                break;
+
+            // End of file
+            if (ch == '\0')
+                return Token(Token.ERROR, "EOF in literal", stream.getPos());
+
+            reStr ~= ch;
+        }
+
+        // Read the flags
+        wstring reFlags = "";
+        for (;;)
+        {
+            ch = stream.peekCh();
+
+            if (ch != 'i' && ch != 'g' && ch != 'm' && ch != 'y')
+                break;
+
+            stream.readCh();
+
+            reFlags ~= ch;
+        }
+
+        //writefln("reStr: \"%s\"", reStr);
+
+        return Token(Token.REGEXP, reStr, reFlags, pos);
+    }
+
+    // Try matching all separators
+    foreach (sep; separators)
+        if (stream.match(sep))
+            return Token(Token.SEP, sep, pos);
+
+    // Try matching all operators
+    foreach (op; operators)
+        if (stream.match(op.str))
+            return Token(Token.OP, op.str, pos);
+
+    // Invalid character
+    int charVal = stream.readCh();
+    wstring charStr;
+    if (charVal >= 33 && charVal <= 126)
+        charStr ~= "'"w ~ cast(wchar)charVal ~ "', "w;
+    charStr ~= to!wstring(format("0x%04x", charVal));
+    return Token(
+        Token.ERROR,
+        "unexpected character ("w ~ charStr ~ ")"w, 
+        pos
+    );
+}
+
+
+}
+
+
 
 /**
 Source code position
@@ -582,338 +926,14 @@ int readEscape(ref StrStream stream)
     }
 }
 
-/**
-Get the first token from a stream
-*/
-Token getToken(ref StrStream stream, LexFlags flags)
-{
-    wchar ch;
-
-    // Consume whitespace and comments
-    for (;;)
-    {
-        ch = stream.peekCh();
-
-        // Whitespace characters
-        if (whitespace(ch))
-        {
-            stream.readCh();
-        }
-
-        // Single-line comment
-        else if (stream.match("//"))
-        {
-            for (;;)
-            {
-                ch = stream.readCh();
-                if (ch == '\n' || ch == '\0')
-                    break;
-            }
-        }
-
-        // Multi-line comment
-        else if (stream.match("/*"))
-        {
-            for (;;)
-            {
-                if (stream.match("*/"))
-                    break;
-                if (stream.peekCh() == '\0')
-                    return Token(
-                        Token.ERROR,
-                        "end of stream in multi-line comment", 
-                        stream.getPos()
-                    );
-                ch = stream.readCh();
-            }
-        }
-
-        // Otherwise
-        else
-        {
-            break;
-        }
-    }
-
-    // Get the position at the start of the token
-    SrcPos pos = stream.getPos();
-
-    // Number
-    if (digit(ch))
-    {
-        // Hexadecimal number
-        if (stream.match("0x"))
-        {
-            enum hexRegex = ctRegex!(`^[0-9|a-f|A-F]+`w);
-            auto m = stream.match(hexRegex);
-
-            if (m.empty)
-            {
-                return Token(
-                    Token.ERROR,
-                    "invalid hex number", 
-                    pos
-                );
-            }
-
-            auto hexStr = m.captures[0];
-            long val;
-            formattedRead(hexStr, "%x", &val);
-
-            return Token(Token.INT, val, pos);
-        }
-
-        // Octal number
-        if (ch == '0')
-        {
-            enum octRegex = ctRegex!(`^0([0-7]+)`w);
-
-            auto m = stream.match(octRegex);
-            if (!m.empty) 
-            {
-                auto octStr = m.captures[1];
-                long val;
-                formattedRead(octStr, "%o", &val);
-                return Token(Token.INT, val, pos);
-            }
-        }
-
-        enum fpRegex = ctRegex!(`^[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?`w);
-
-        auto m = stream.match(fpRegex);
-        assert (m.empty == false);
-        auto numStr = m.captures[0];
-
-        // If this is a floating-point number
-        if (countUntil(numStr, '.') != -1 ||
-            countUntil(numStr, 'e') != -1 ||
-            countUntil(numStr, 'E') != -1)
-        {
-            double val = to!(double)(numStr);
-            return Token(Token.FLOAT, val, pos);
-        }
-
-        // Integer number
-        else
-        {
-            long val = to!(long)(numStr);
-            return Token(Token.INT, val, pos);
-        }
-    }
-
-    // String constant
-    if (ch == '"' || ch == '\'')
-    {
-        auto openChar = stream.readCh();
-
-        wstring str = "";
-
-        // Until the end of the string
-        for (;;)
-        {
-            ch = stream.readCh();
-
-            if (ch == openChar)
-            {
-                break;
-            }
-
-            // End of file
-            else if (ch == '\0')
-            {
-                return Token(
-                    Token.ERROR,
-                    "EOF in string literal",
-                    stream.getPos()
-                );
-            }
-
-            // End of line
-            else if (ch == '\n')
-            {
-                return Token(
-                    Token.ERROR,
-                    "newline in string literal",
-                    stream.getPos()
-                );
-            }
-
-            // Escape sequence
-            else if (ch == '\\')
-            {
-                auto escCh = readEscape(stream);
-                if (escCh != -1)
-                    str ~= escCh;
-            }
-
-            // Normal character
-            else
-            {
-                str ~= ch;
-            }
-        }
-
-        return Token(Token.STRING, str, pos);
-    }
-
-    // Quasi literal
-    if (ch == '`')
-    {
-        // TODO: full support for quasi-literals
-        // for now, quasis are only multi-line strings
-
-        // Read the opening ` character
-        auto openChar = stream.readCh();
-
-        wstring str = "";
-
-        // Until the end of the string
-        for (;;)
-        {
-            ch = stream.readCh();
-
-            if (ch == openChar)
-            {
-                break;
-            }
-
-            // End of file
-            else if (ch == '\0')
-            {
-                return Token(
-                    Token.ERROR,
-                    "EOF in string literal",
-                    stream.getPos()
-                );
-            }
-
-            // Escape sequence
-            else if (ch == '\\')
-            {
-                auto escCh = readEscape(stream);
-                if (escCh != -1)
-                    str ~= escCh;
-            }
-
-            // Normal character
-            else
-            {
-                str ~= ch;
-            }
-        }
-
-        return Token(Token.STRING, str, pos);
-    }
-
-    // End of file
-    if (ch == '\0')
-    {
-        return Token(Token.EOF, pos);
-    }
-
-    // Identifier or keyword
-    if (identStart(ch))
-    {
-        stream.readCh();
-        wstring identStr = ""w ~ ch;
-
-        for (;;)
-        {
-            ch = stream.peekCh();
-            if (identPart(ch) == false)
-                break;
-            stream.readCh();
-            identStr ~= ch;
-        }
-
-        // Try matching all keywords
-        if (countUntil(keywords, identStr) != -1)
-            return Token(Token.KEYWORD, identStr, pos);
-
-        // Try matching all operators
-        foreach (op; operators)
-            if (identStr == op.str)
-                return Token(Token.OP, identStr, pos);
-
-        return Token(Token.IDENT, identStr, pos);
-    }
-
-    // Regular expression
-    if ((flags & LEX_MAYBE_RE) && ch == '/')
-    {
-        // Read the opening slash
-        stream.readCh();
-
-        // Read the pattern
-        wstring reStr = "";
-        for (;;)
-        {
-            ch = stream.readCh();
-
-            if (ch == '\\' && stream.peekCh() == '/')
-            {
-                stream.readCh();
-                reStr ~= "\\/"w;
-                continue;
-            }
-
-            if (ch == '/')
-                break;
-
-            // End of file
-            if (ch == '\0')
-                return Token(Token.ERROR, "EOF in literal", stream.getPos());
-
-            reStr ~= ch;
-        }
-
-        // Read the flags
-        wstring reFlags = "";
-        for (;;)
-        {
-            ch = stream.peekCh();
-
-            if (ch != 'i' && ch != 'g' && ch != 'm' && ch != 'y')
-                break;
-
-            stream.readCh();
-
-            reFlags ~= ch;
-        }
-
-        //writefln("reStr: \"%s\"", reStr);
-
-        return Token(Token.REGEXP, reStr, reFlags, pos);
-    }
-
-    // Try matching all separators
-    foreach (sep; separators)
-        if (stream.match(sep))
-            return Token(Token.SEP, sep, pos);
-
-    // Try matching all operators
-    foreach (op; operators)
-        if (stream.match(op.str))
-            return Token(Token.OP, op.str, pos);
-
-    // Invalid character
-    int charVal = stream.readCh();
-    wstring charStr;
-    if (charVal >= 33 && charVal <= 126)
-        charStr ~= "'"w ~ cast(wchar)charVal ~ "', "w;
-    charStr ~= to!wstring(format("0x%04x", charVal));
-    return Token(
-        Token.ERROR,
-        "unexpected character ("w ~ charStr ~ ")"w, 
-        pos
-    );
-}
 
 /**
 Token stream, to simplify parsing
 */
 class TokenStream
 {
+	CommonLexer clx;
+	
     /// String stream before the next token
     private StrStream preStream;
 
@@ -935,12 +955,13 @@ class TokenStream
     /**
     Constructor to tokenize a string
     */
-    this(wstring str, string file)
+    this(CommonLexer _clx, wstring str, string file)
     {
         this.preStream = StrStream(str, file);
 
         this.tokenAvail = false;
         this.nlPresent = false;
+        clx = _clx;
     }
 
     /**
@@ -948,6 +969,8 @@ class TokenStream
     */
     this(TokenStream that)
     {
+        clx = that.clx;
+
         // Copy the string streams
         this.preStream = that.preStream;
         this.postStream = that.postStream;
@@ -983,7 +1006,7 @@ class TokenStream
         if (tokenAvail is false || this.lexFlags != lexFlags)
         {
             postStream = preStream;
-            nextToken = getToken(postStream, lexFlags);
+            nextToken = clx.getToken(postStream, lexFlags);
             tokenAvail = true;
             lexFlags = lexFlags;
         }

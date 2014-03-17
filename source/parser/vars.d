@@ -176,7 +176,7 @@ void resolveVars(FunExpr fun, Scope parentSc = null)
     if ("arguments"w !in s.decls && cast(ASTProgram)fun is null)
     {
         // Create a special symbol for the "arguments" object
-        fun.argObjIdent = new IdentExpr("arguments"w);
+        fun.argObjIdent = new IdentExpr(fun.clx, "arguments"w);
         s.addDecl(fun.argObjIdent);
     }
 

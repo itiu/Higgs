@@ -52,12 +52,15 @@ Base class for all AST nodes
 */
 class ASTNode : IdObject
 {
+	CommonLexer clx;
+	
     SrcPos pos;
 
     // Force subclasses to set the position
-    this(SrcPos pos)
+    this(CommonLexer _clx, SrcPos pos)
     { 
         this.pos = pos; 
+        clx = _clx;
     }
 }
 
@@ -69,9 +72,9 @@ class ASTProgram : FunExpr
     /// List of global variable declarations
     IdentExpr[] globals;
 
-    this(ASTStmt[] stmts, SrcPos pos = null)
+    this(CommonLexer _clx, ASTStmt[] stmts, SrcPos pos = null)
     {
-        super(null, [], new BlockStmt(stmts), pos);
+        super(_clx, null, [], new BlockStmt(_clx, stmts), pos);
     }
 
     override string toString()
@@ -103,9 +106,9 @@ class ASTStmt : ASTNode
     /// Labels preceding this statement
     IdentExpr[] labels = [];
 
-    this(SrcPos pos)
+    this(CommonLexer _clx, SrcPos pos)
     {
-        super(pos);
+        super(_clx, pos);
     }
 
     string blockStr()
@@ -128,9 +131,9 @@ class BlockStmt : ASTStmt
 {
     ASTStmt[] stmts;
 
-    this(ASTStmt[] stmts, SrcPos pos = null)
+    this(CommonLexer _clx, ASTStmt[] stmts, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.stmts = stmts;
     }
 
@@ -155,11 +158,11 @@ class VarStmt : ASTStmt
     /// Initializer expressions
     ASTExpr[] initExprs;
 
-    this(IdentExpr[] identExprs, ASTExpr[] initExprs, SrcPos pos = null)
+    this(CommonLexer _clx, IdentExpr[] identExprs, ASTExpr[] initExprs, SrcPos pos = null)
     {
         assert (identExprs.length == initExprs.length);
 
-        super(pos);
+        super(_clx, pos);
         this.identExprs = identExprs;
         this.initExprs = initExprs;
     }
@@ -200,13 +203,14 @@ class IfStmt : ASTStmt
     ASTStmt falseStmt;
 
     this(
+    	CommonLexer _clx,
         ASTExpr testExpr, 
         ASTStmt trueStmt,
         ASTStmt falseStmt,
         SrcPos pos = null
     )
     {
-        super(pos);
+        super(_clx, pos);
         this.testExpr = testExpr;
         this.trueStmt = trueStmt;
         this.falseStmt = falseStmt;
@@ -243,12 +247,13 @@ class WhileStmt : ASTStmt
     ASTStmt bodyStmt;
 
     this(
+    	CommonLexer _clx,
         ASTExpr testExpr, 
         ASTStmt bodyStmt,
         SrcPos pos = null
     )
     {
-        super(pos);
+        super(_clx, pos);
         this.testExpr = testExpr;
         this.bodyStmt = bodyStmt;
     }
@@ -274,6 +279,7 @@ class ForStmt : ASTStmt
     ASTStmt bodyStmt;
 
     this(
+    	CommonLexer _clx,
         ASTStmt initStmt, 
         ASTExpr testExpr, 
         ASTExpr incrExpr, 
@@ -286,7 +292,7 @@ class ForStmt : ASTStmt
             cast(ExprStmt)initStmt !is null
         );
 
-        super(pos);
+        super(_clx, pos);
         this.initStmt = initStmt;
         this.testExpr = testExpr;
         this.incrExpr = incrExpr;
@@ -331,6 +337,7 @@ class ForInStmt : ASTStmt
     ASTStmt bodyStmt;
 
     this(
+    	CommonLexer _clx,
         bool hasDecl,
         ASTExpr varExpr,
         ASTExpr inExpr,
@@ -338,7 +345,7 @@ class ForInStmt : ASTStmt
         SrcPos pos = null
     )
     {
-        super(pos);
+        super(_clx, pos);
         this.hasDecl = hasDecl;
         this.varExpr = varExpr;
         this.inExpr = inExpr;
@@ -366,12 +373,13 @@ class DoWhileStmt : ASTStmt
     ASTExpr testExpr;
 
     this(
+    	CommonLexer _clx,
         ASTStmt bodyStmt,
         ASTExpr testExpr,
         SrcPos pos = null
     )
     {
-        super(pos);
+        super(_clx, pos);
         this.bodyStmt = bodyStmt;
         this.testExpr = testExpr;
     }
@@ -400,6 +408,7 @@ class SwitchStmt : ASTStmt
     ASTStmt[] defaultStmts;
 
     this(
+    	CommonLexer _clx,
         ASTExpr switchExpr,
         ASTExpr[] caseExprs,
         ASTStmt[][] caseStmts,
@@ -409,7 +418,7 @@ class SwitchStmt : ASTStmt
     {
         assert (caseExprs.length == caseStmts.length);
 
-        super(pos);
+        super(_clx, pos);
         this.switchExpr = switchExpr;
         this.caseExprs = caseExprs;
         this.caseStmts = caseStmts;
@@ -464,9 +473,9 @@ class BreakStmt : ASTStmt
 {
     IdentExpr label;
 
-    this(IdentExpr label, SrcPos pos = null)
+    this(CommonLexer _clx, IdentExpr label, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.label = label;
     }
 
@@ -486,14 +495,14 @@ class ContStmt : ASTStmt
 {
     IdentExpr label;
 
-    this(SrcPos pos = null)
+    this(CommonLexer _clx, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
     }
 
-    this(IdentExpr label, SrcPos pos = null)
+    this(CommonLexer _clx, IdentExpr label, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.label = label;
     }
 
@@ -513,9 +522,9 @@ class ReturnStmt : ASTStmt
 {
     ASTExpr expr;
 
-    this(ASTExpr expr, SrcPos pos = null)
+    this(CommonLexer _clx, ASTExpr expr, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.expr = expr;
     }
 
@@ -535,9 +544,9 @@ class ThrowStmt : ASTStmt
 {
     ASTExpr expr;
 
-    this(ASTExpr expr, SrcPos pos = null)
+    this(CommonLexer _clx, ASTExpr expr, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.expr = expr;
     }
 
@@ -558,6 +567,7 @@ class TryStmt : ASTStmt
     ASTStmt finallyStmt;
 
     this(
+    	CommonLexer _clx,
         ASTStmt tryStmt,
         IdentExpr catchIdent,
         ASTStmt catchStmt,
@@ -565,7 +575,7 @@ class TryStmt : ASTStmt
         SrcPos pos = null
     )
     {
-        super(pos);
+        super(_clx, pos);
         this.tryStmt = tryStmt;
         this.catchIdent = catchIdent;
         this.catchStmt = catchStmt;
@@ -604,9 +614,9 @@ class ExprStmt : ASTStmt
 {
     ASTExpr expr;
 
-    this(ASTExpr expr, SrcPos pos = null)
+    this(CommonLexer _clx, ASTExpr expr, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.expr = expr;
     }
 
@@ -620,10 +630,10 @@ class ExprStmt : ASTStmt
 Base class for AST expressions
 */
 class ASTExpr : ASTNode
-{
-    this(SrcPos pos) 
+{	
+    this(CommonLexer _clx, SrcPos pos) 
     {
-        super(pos); 
+        super(_clx, pos); 
     }
 
     /// Get the operator precedence for this expression
@@ -672,9 +682,9 @@ class FunExpr : ASTExpr
     /// Flag indicating the "this" argument is used
     bool usesThis = false;
 
-    this(IdentExpr name, IdentExpr[] params, ASTStmt bodyStmt, SrcPos pos = null)
+    this(CommonLexer _clx, IdentExpr name, IdentExpr[] params, ASTStmt bodyStmt, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.name = name;
         this.params = params;
         this.bodyStmt = bodyStmt;
@@ -710,7 +720,7 @@ class FunExpr : ASTExpr
 Binary operator expression
 */
 class BinOpExpr : ASTExpr
-{
+{	
     /// Binary operator
     Operator op;
 
@@ -718,21 +728,21 @@ class BinOpExpr : ASTExpr
     ASTExpr lExpr;
     ASTExpr rExpr;
 
-    this(Operator op, ASTExpr lExpr, ASTExpr rExpr, SrcPos pos = null)
+    this(CommonLexer _clx, Operator op, ASTExpr lExpr, ASTExpr rExpr, SrcPos pos = null)
     {
         assert (op !is null, "operator is null");
         assert (op.arity == 2, "invalid arity");
 
-        super(pos);
+        super(_clx, pos);
         this.op = op;
         this.lExpr = lExpr;
         this.rExpr = rExpr;
     }
 
-    this(wstring opStr, ASTExpr lExpr, ASTExpr rExpr, SrcPos pos = null)
+    this(CommonLexer _clx, wstring opStr, ASTExpr lExpr, ASTExpr rExpr, SrcPos pos = null)
     {
-        auto op = findOperator(opStr, 2);
-        this(op, lExpr, rExpr, pos);
+        auto op = clx.findOperator(opStr, 2);
+        this(_clx, op, lExpr, rExpr, pos);
     }
 
     override int getPrec()
@@ -785,19 +795,19 @@ class UnOpExpr : ASTExpr
     /// Subexpression
     ASTExpr expr;
 
-    this(Operator op, ASTExpr expr, SrcPos pos = null)
+    this(CommonLexer _clx, Operator op, ASTExpr expr, SrcPos pos = null)
     {
         assert (op.arity == 1);
 
-        super(pos);
+        super(_clx, pos);
         this.op = op;
         this.expr = expr;
     }
 
-    this(wstring opStr, char assoc, ASTExpr expr, SrcPos pos = null)
+    this(CommonLexer _clx, wstring opStr, char assoc, ASTExpr expr, SrcPos pos = null)
     {
-        auto op = findOperator(opStr, 1, assoc);
-        this(op, expr, pos);
+        auto op = clx.findOperator(opStr, 1, assoc);
+        this(_clx, op, expr, pos);
     }
 
     override int getPrec()
@@ -827,9 +837,9 @@ class CondExpr : ASTExpr
     ASTExpr trueExpr;
     ASTExpr falseExpr;
 
-    this(ASTExpr testExpr, ASTExpr trueExpr, ASTExpr falseExpr, SrcPos pos = null)
+    this(CommonLexer _clx, ASTExpr testExpr, ASTExpr trueExpr, ASTExpr falseExpr, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.testExpr = testExpr;
         this.trueExpr = trueExpr;
         this.falseExpr = falseExpr;
@@ -850,9 +860,9 @@ class CallExpr : ASTExpr
 
     ASTExpr[] args;
 
-    this(ASTExpr base, ASTExpr[] args, SrcPos pos = null)
+    this(CommonLexer _clx, ASTExpr base, ASTExpr[] args, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.base = base;
         this.args = args;
     }
@@ -872,9 +882,9 @@ class NewExpr : ASTExpr
 
     ASTExpr[] args;
 
-    this(ASTExpr base, ASTExpr[] args, SrcPos pos = null)
+    this(CommonLexer _clx, ASTExpr base, ASTExpr[] args, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.base = base;
         this.args = args;
     }
@@ -894,9 +904,9 @@ class IndexExpr : ASTExpr
 
     ASTExpr index;
 
-    this(ASTExpr base, ASTExpr index, SrcPos pos = null)
+    this(CommonLexer _clx, ASTExpr base, ASTExpr index, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.base = base;
         this.index = index;
     }
@@ -914,9 +924,9 @@ class ArrayExpr : ASTExpr
 {
     ASTExpr[] exprs;
 
-    this(ASTExpr[] exprs, SrcPos pos = null)
+    this(CommonLexer _clx, ASTExpr[] exprs, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.exprs = exprs;
     }
 
@@ -935,11 +945,11 @@ class ObjectExpr : ASTExpr
 
     ASTExpr[] values;
 
-    this(StringExpr[] names, ASTExpr[] values, SrcPos pos = null)
+    this(CommonLexer _clx, StringExpr[] names, ASTExpr[] values, SrcPos pos = null)
     {
         assert (names.length == values.length);
 
-        super(pos);
+        super(_clx, pos);
         this.names = names;
         this.values = values;
     }
@@ -976,9 +986,9 @@ class IdentExpr : ASTExpr
     /// Identifier node associated with this variable declaration, if applicable
     IdentExpr declNode = null;
 
-    this(wstring name, SrcPos pos = null)
+    this(CommonLexer _clx, wstring name, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.name = name;
     }
 
@@ -995,9 +1005,9 @@ class IntExpr : ASTExpr
 {
     long val;
 
-    this(long val, SrcPos pos = null)
+    this(CommonLexer _clx, long val, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.val = val;
     }
 
@@ -1014,9 +1024,9 @@ class FloatExpr : ASTExpr
 {
     double val;
 
-    this(double val, SrcPos pos = null)
+    this(CommonLexer _clx, double val, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.val = val;
     }
 
@@ -1036,9 +1046,9 @@ class StringExpr : ASTExpr
 {
     wstring val;
 
-    this(wstring val, SrcPos pos = null)
+    this(CommonLexer _clx, wstring val, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.val = val;
     }
 
@@ -1057,9 +1067,9 @@ class RegexpExpr : ASTExpr
 
     wstring flags;
 
-    this(wstring pattern, wstring flags, SrcPos pos = null)
+    this(CommonLexer _clx, wstring pattern, wstring flags, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
         this.pattern = pattern;
         this.flags = flags;
     }
@@ -1075,9 +1085,9 @@ True boolean constant expression
 */
 class TrueExpr : ASTExpr
 {
-    this(SrcPos pos = null)
+    this(CommonLexer _clx, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
     }
 
     override string toString()
@@ -1091,9 +1101,9 @@ False boolean constant expression
 */
 class FalseExpr : ASTExpr
 {
-    this(SrcPos pos = null)
+    this(CommonLexer _clx, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
     }
 
     override string toString()
@@ -1107,9 +1117,9 @@ Null constant expression
 */
 class NullExpr : ASTExpr
 {
-    this(SrcPos pos = null)
+    this(CommonLexer _clx, SrcPos pos = null)
     {
-        super(pos);
+        super(_clx, pos);
     }
 
     override string toString()

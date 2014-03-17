@@ -59,6 +59,8 @@ import runtime.object;
 import runtime.gc;
 import jit.codeblock;
 import jit.jit;
+import parser.lexer;
+
 
 /**
 Run-time error
@@ -495,8 +497,34 @@ class VM
     /**
     Constructor, initializes the VM state
     */
+    CommonLexer clx; 
+    // Mappings for arguments/return values
+    Type[string] typeMap;
+    size_t[string] sizeMap;
+    
     this(bool loadRuntime = true, bool loadStdLib = true)
     {
+    	
+    	
+    typeMap = [
+        "i8" : Type.INT32,
+        "i16" : Type.INT32,
+        "i32" : Type.INT32,
+        "i64" : Type.INT64,
+        "f64" : Type.FLOAT64,
+        "*" : Type.RAWPTR
+    ];
+
+    sizeMap = [
+        "i8" : 8,
+        "i16" : 16,
+        "i32" : 32,
+        "i64" : 64,
+        "f64" : 64,
+        "*" : 64
+    ];    	
+    	clx = new CommonLexer ();
+    	 
         assert (
             !(loadStdLib && !loadRuntime),
             "cannot load stdlib without loading runtime"
@@ -1080,7 +1108,7 @@ class VM
     ValuePair load(string fileName)
     {
         auto file = getLoadPath(fileName);
-        auto ast = parseFile(file);
+        auto ast = parseFile(clx, file);
         return exec(ast);
     }
 
@@ -1091,7 +1119,7 @@ class VM
     {
         //writefln("input: %s", input);
 
-        auto ast = parseString(input, fileName);
+        auto ast = parseString(clx, input, fileName);
         auto result = exec(ast);
 
         return result;

@@ -2155,7 +2155,7 @@ void gen_load_file(
         try
         {
             // Parse the source file and generate IR
-            auto ast = parseFile(fileName);
+            auto ast = parseFile(vm.clx, fileName);
             auto fun = astToIR(vm, ast);
 
             // Register this function in the function reference set
@@ -2272,7 +2272,7 @@ void gen_eval_str(
         try
         {
             // Parse the source file and generate IR
-            auto ast = parseString(codeStr, "eval_str");
+            auto ast = parseString(vm.clx, codeStr, "eval_str");
             auto fun = astToIR(vm, ast);
 
             // Register this function in the function reference set
@@ -3785,30 +3785,6 @@ void gen_get_sym(
 
 }
 
-// Mappings for arguments/return values
-Type[string] typeMap;
-size_t[string] sizeMap;
-shared static this()
-{
-    typeMap = [
-        "i8" : Type.INT32,
-        "i16" : Type.INT32,
-        "i32" : Type.INT32,
-        "i64" : Type.INT64,
-        "f64" : Type.FLOAT64,
-        "*" : Type.RAWPTR
-    ];
-
-    sizeMap = [
-        "i8" : 8,
-        "i16" : 16,
-        "i32" : 32,
-        "i64" : 64,
-        "f64" : 64,
-        "*" : 64
-    ];
-}
-
 void gen_call_ffi(
     BlockVersion ver,
     CodeGenState st,
@@ -3865,7 +3841,7 @@ void gen_call_ffi(
         }
         else if (iArgIdx < cargRegs.length)
         {
-            auto argSize = sizeMap[argTypes[idx]];
+            auto argSize = vm.sizeMap[argTypes[idx]];
             auto argOpnd = st.getWordOpnd(
                 as, 
                 instr,
@@ -3890,7 +3866,7 @@ void gen_call_ffi(
     // Push the stack arguments, in reverse order
     foreach_reverse (idx; stackArgs)
     {
-        auto argSize = sizeMap[argTypes[idx]];
+        auto argSize = vm.sizeMap[argTypes[idx]];
         auto argOpnd = st.getWordOpnd(
             as,
             instr,
@@ -3914,7 +3890,7 @@ void gen_call_ffi(
     if (retType == "f64")
     {
         as.movq(outOpnd, X86Opnd(XMM0));
-        st.setOutType(as, instr, typeMap[retType]);
+        st.setOutType(as, instr, vm.typeMap[retType]);
     }
     else if (retType == "void")
     {
@@ -3924,7 +3900,7 @@ void gen_call_ffi(
     else
     {
         as.mov(outOpnd, X86Opnd(RAX));
-        st.setOutType(as, instr, typeMap[retType]);
+        st.setOutType(as, instr, vm.typeMap[retType]);
     }
 
     // Pop the stack arguments

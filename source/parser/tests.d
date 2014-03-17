@@ -43,14 +43,15 @@ import std.file;
 import std.algorithm;
 import parser.ast;
 import parser.parser;
+import parser.lexer;
 
-ASTProgram testParseFile(string fileName)
+ASTProgram testParseFile(CommonLexer _clx, string fileName)
 {
     ASTProgram ast;
 
     try
     {
-        ast = parseFile(fileName);
+        ast = parseFile(_clx, fileName);
     }
     catch (Throwable e)
     {
@@ -64,7 +65,7 @@ ASTProgram testParseFile(string fileName)
     try
     {
         str1 = ast.toString();
-        auto ast2 = parseString(str1);
+        auto ast2 = parseString(_clx, str1);
         str2 = ast2.toString();
 
         if (str1 != str2)
@@ -82,13 +83,13 @@ ASTProgram testParseFile(string fileName)
     return ast;
 }
 
-ASTProgram testParse(string input, bool valid = true)
+ASTProgram testParse(CommonLexer _clx, string input, bool valid = true)
 {
     ASTProgram ast;
 
     try
     {
-        ast = parseString(input);
+        ast = parseString(_clx, input);
 
         assert (ast.pos !is null, "null source position");
     }
@@ -116,9 +117,9 @@ ASTProgram testParse(string input, bool valid = true)
     return ast;
 }
 
-ASTProgram testAST(string input, ASTNode inAst)
+ASTProgram testAST(CommonLexer _clx, string input, ASTNode inAst)
 {
-    ASTProgram outAst = testParse(input);
+    ASTProgram outAst = testParse(_clx, input);
 
     string outStr = outAst.toString();
     string inStr = inAst.toString();
@@ -141,8 +142,8 @@ ASTProgram testAST(string input, ASTNode inAst)
 
 ASTProgram testExprAST(string input, ASTExpr exprAst)
 {
-    ASTProgram inAst = new ASTProgram([new ReturnStmt(exprAst)]);
-    return testAST(input, inAst);
+    ASTProgram inAst = new ASTProgram(exprAst.clx, [new ReturnStmt(exprAst.clx, exprAst)]);
+    return testAST(exprAst.clx, input, inAst);
 }
 
 /// Parenthesization test

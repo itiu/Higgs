@@ -136,27 +136,27 @@ IdentExpr readIdent(TokenStream input)
     if (t.type != Token.IDENT)
         throw new ParseError("expected identifier", t.pos);
 
-    return new IdentExpr(t.stringVal, t.pos);
+    return new IdentExpr(input.clx, t.stringVal, t.pos);
 }
 
 /**
 Parse a source file
 */
-ASTProgram parseFile(string fileName)
+ASTProgram parseFile(CommonLexer _clx, string fileName)
 {
     string src = readText!(string)(fileName);
-    return parseString(src, fileName);
+    return parseString(_clx, src, fileName);
 }
 
 /**
 Parse a source string
 */
-ASTProgram parseString(string src, string fileName = "")
+ASTProgram parseString(CommonLexer _clx, string src, string fileName = "")
 {
     // Convert the string to UTF-16
     wstring wSrc = toUTF16(src);
 
-    auto input = new TokenStream(wSrc, fileName);
+    auto input = new TokenStream(_clx, wSrc, fileName);
 
     return parseProgram(input);
 }
@@ -177,7 +177,7 @@ ASTProgram parseProgram(TokenStream input)
     }
 
     // Create the AST program node
-    auto ast = new ASTProgram(stmtApp.data, pos);
+    auto ast = new ASTProgram(input.clx, stmtApp.data, pos);
 
     // Transform single expression statements into return statements
     void makeReturn(ASTStmt stmt)
@@ -195,7 +195,7 @@ ASTProgram parseProgram(TokenStream input)
         if (funExpr && funExpr.name !is null)
             return;
 
-        blockStmt.stmts[$-1] = new ReturnStmt(
+        blockStmt.stmts[$-1] = new ReturnStmt(input.clx, 
             exprStmt.expr,
             exprStmt.pos
         );
@@ -242,7 +242,7 @@ ASTStmt parseStmt(TokenStream input)
     // Empty statement
     if (input.matchSep(";"))
     {
-        return new ExprStmt(new TrueExpr(pos), pos);
+        return new ExprStmt(input.clx, new TrueExpr(input.clx, pos), pos);
     }
 
     // Block statement
@@ -266,7 +266,7 @@ ASTStmt parseStmt(TokenStream input)
             stmts ~= [parseStmt(input)]; 
         }
 
-        return new BlockStmt(stmts, pos);
+        return new BlockStmt(input.clx, stmts, pos);
     }
 
     // If statement
@@ -282,9 +282,9 @@ ASTStmt parseStmt(TokenStream input)
         if (input.matchKw("else"))
             falseStmt = parseStmt(input);
         else
-            falseStmt = new ExprStmt(new TrueExpr());
+            falseStmt = new ExprStmt(input.clx, new TrueExpr(input.clx));
 
-        return new IfStmt(testExpr, trueStmt, falseStmt, pos);
+        return new IfStmt(input.clx, testExpr, trueStmt, falseStmt, pos);
     }
 
     // While loop
@@ -295,7 +295,7 @@ ASTStmt parseStmt(TokenStream input)
         input.readSep(")");
         auto bodyStmt = parseStmt(input);
 
-        return new WhileStmt(testExpr, bodyStmt, pos);
+        return new WhileStmt(input.clx, testExpr, bodyStmt, pos);
     }
 
     // Do-while loop
@@ -308,7 +308,7 @@ ASTStmt parseStmt(TokenStream input)
         auto testExpr = parseExpr(input);
         input.readSep(")");
 
-        return new DoWhileStmt(bodyStmt, testExpr, pos);
+        return new DoWhileStmt(input.clx, bodyStmt, testExpr, pos);
     }
 
     // For or for-in loop
@@ -370,7 +370,7 @@ ASTStmt parseStmt(TokenStream input)
             }
         }
 
-        return new SwitchStmt(
+        return new SwitchStmt(input.clx, 
             switchExpr, 
             caseExprs,
             caseStmts,
@@ -384,7 +384,7 @@ ASTStmt parseStmt(TokenStream input)
     {
         auto label = input.peekSemiAuto()? null:input.readIdent();
         readSemiAuto(input);
-        return new BreakStmt(label, pos);
+        return new BreakStmt(input.clx, label, pos);
     }
 
     // Continue statement
@@ -392,18 +392,18 @@ ASTStmt parseStmt(TokenStream input)
     {
         auto label = input.peekSemiAuto()? null:input.readIdent();
         readSemiAuto(input);
-        return new ContStmt(label, pos);
+        return new ContStmt(input.clx, label, pos);
     }
 
     // Return statement
     else if (input.matchKw("return"))
     {
         if (input.matchSep(";") || input.peekSemiAuto())
-            return new ReturnStmt(null, pos);
+            return new ReturnStmt(input.clx, null, pos);
 
         ASTExpr expr = parseExpr(input);
         readSemiAuto(input);
-        return new ReturnStmt(expr, pos);
+        return new ReturnStmt(input.clx, expr, pos);
     }
 
     // Throw statement
@@ -411,7 +411,7 @@ ASTStmt parseStmt(TokenStream input)
     {
         ASTExpr expr = parseExpr(input);
         readSemiAuto(input);
-        return new ThrowStmt(expr, pos);
+        return new ThrowStmt(input.clx, expr, pos);
     }
 
     // Try-catch-finally statement
@@ -440,7 +440,7 @@ ASTStmt parseStmt(TokenStream input)
         if (!catchStmt && !finallyStmt)
             throw new ParseError("no catch or finally block", input.getPos());
 
-        return new TryStmt(
+        return new TryStmt(input.clx, 
             tryStmt, 
             catchIdent, 
             catchStmt,
@@ -472,7 +472,7 @@ ASTStmt parseStmt(TokenStream input)
                     name.pos
                 );
             }
-            IdentExpr identExpr = new IdentExpr(name.stringVal, name.pos);
+            IdentExpr identExpr = new IdentExpr(input.clx, name.stringVal, name.pos);
 
             ASTExpr initExpr = null;
             auto op = input.peek();
@@ -495,13 +495,13 @@ ASTStmt parseStmt(TokenStream input)
             initExprs ~= [initExpr];
         }
 
-        return new VarStmt(identExprs, initExprs, pos);
+        return new VarStmt(input.clx, identExprs, initExprs, pos);
     }
 
     // Function declaration statement
     else if (input.peekKw("function"))
     {
-        auto funStmt = new ExprStmt(parseExpr(input), pos);
+        auto funStmt = new ExprStmt(input.clx, parseExpr(input), pos);
 
         // Weed out trailing semicolons
         if (input.peekSep(";"))
@@ -542,7 +542,7 @@ ASTStmt parseStmt(TokenStream input)
     // Read the terminating semicolon
     readSemiAuto(input);
 
-    return new ExprStmt(expr, pos);
+    return new ExprStmt(input.clx, expr, pos);
 }
 
 /**
@@ -599,7 +599,7 @@ ASTStmt parseForStmt(TokenStream input)
         ASTExpr testExpr;
         if (input.matchSep(";"))
         {
-            testExpr = new TrueExpr(pos);
+            testExpr = new TrueExpr(input.clx, pos);
         }
         else
         {
@@ -612,7 +612,7 @@ ASTStmt parseForStmt(TokenStream input)
         ASTExpr incrExpr;
         if (input.matchSep(")"))
         {
-            incrExpr = new TrueExpr(pos);
+            incrExpr = new TrueExpr(input.clx, pos);
         }
         else
         {
@@ -623,7 +623,7 @@ ASTStmt parseForStmt(TokenStream input)
         // Parse the loop body
         auto bodyStmt = parseStmt(input);
 
-        return new ForStmt(initStmt, testExpr, incrExpr, bodyStmt, pos);
+        return new ForStmt(input.clx, initStmt, testExpr, incrExpr, bodyStmt, pos);
     }
 
     // This is a for-in statement
@@ -646,7 +646,7 @@ ASTStmt parseForStmt(TokenStream input)
         // Parse the loop body
         auto bodyStmt = parseStmt(input);
 
-        return new ForInStmt(hasDecl, varExpr, inExpr, bodyStmt, pos);
+        return new ForInStmt(input.clx, hasDecl, varExpr, inExpr, bodyStmt, pos);
     }
 }
 
@@ -687,11 +687,11 @@ ASTExpr parseExpr(TokenStream input, int minPrec = 0)
         //writefln("op str: %s", cur.stringVal);
 
         // Attempt to find a corresponding operator
-        auto op = findOperator(cur.stringVal, 2);
+        auto op = input.clx.findOperator(cur.stringVal, 2);
         if (op is null)
-            op = findOperator(cur.stringVal, 1, 'l');
+            op = input.clx.findOperator(cur.stringVal, 1, 'l');
         if (op is null && cur.stringVal == "?")
-            op = findOperator(cur.stringVal, 3);
+            op = input.clx.findOperator(cur.stringVal, 3);
 
         // If no operator matches, break out
         if (op is null)
@@ -711,7 +711,7 @@ ASTExpr parseExpr(TokenStream input, int minPrec = 0)
         {
             // Parse the argument list and create the call expression
             auto argExprs = parseExprList(input, "(", ")");
-            lhsExpr = new CallExpr(lhsExpr, argExprs, lhsExpr.pos);
+            lhsExpr = new CallExpr(input.clx, lhsExpr, argExprs, lhsExpr.pos);
         }
 
         // If this is an array indexing expression
@@ -719,7 +719,7 @@ ASTExpr parseExpr(TokenStream input, int minPrec = 0)
         {
             auto indexExpr = parseExpr(input);
             input.readSep("]");
-            lhsExpr = new IndexExpr(lhsExpr, indexExpr, lhsExpr.pos);
+            lhsExpr = new IndexExpr(input.clx, lhsExpr, indexExpr, lhsExpr.pos);
         }
 
         // If this is a member expression
@@ -738,10 +738,10 @@ ASTExpr parseExpr(TokenStream input, int minPrec = 0)
                     tok.pos
                 );
             }
-            auto stringExpr = new StringExpr(tok.stringVal, tok.pos);
+            auto stringExpr = new StringExpr(input.clx, tok.stringVal, tok.pos);
 
             // Produce an indexing expression
-            lhsExpr = new IndexExpr(lhsExpr, stringExpr, lhsExpr.pos);
+            lhsExpr = new IndexExpr(input.clx, lhsExpr, stringExpr, lhsExpr.pos);
         }
 
         // If this is the ternary conditional operator
@@ -754,7 +754,7 @@ ASTExpr parseExpr(TokenStream input, int minPrec = 0)
             input.readSep(":");
             auto falseExpr = parseExpr(input, nextMinPrec);
 
-            lhsExpr = new CondExpr(lhsExpr, trueExpr, falseExpr, lhsExpr.pos);
+            lhsExpr = new CondExpr(input.clx, lhsExpr, trueExpr, falseExpr, lhsExpr.pos);
         }
 
         // If this is a binary operator
@@ -767,12 +767,12 @@ ASTExpr parseExpr(TokenStream input, int minPrec = 0)
             ASTExpr rhsExpr = parseExpr(input, nextMinPrec);
 
             // Convert expressions of the form "x <op>= y" to "x = x <op> y"
-            auto eqOp = findOperator("=", 2, 'r');
+            auto eqOp = input.clx.findOperator("=", 2, 'r');
             if (op.str.length >= 2 && op.str.back == '=' && op.prec == eqOp.prec)
             {
-                auto rhsOp = findOperator(op.str[0..op.str.length-1], 2);
+                auto rhsOp = input.clx.findOperator(op.str[0..op.str.length-1], 2);
                 assert (rhsOp !is null);
-                rhsExpr = new BinOpExpr(rhsOp, lhsExpr, rhsExpr, rhsExpr.pos);
+                rhsExpr = new BinOpExpr(input.clx, rhsOp, lhsExpr, rhsExpr, rhsExpr.pos);
                 op = eqOp;
             }
 
@@ -809,12 +809,12 @@ ASTExpr parseExpr(TokenStream input, int minPrec = 0)
                     }
 
                     if (nameStr)
-                        funExpr.name = new IdentExpr(nameStr, funExpr.pos);
+                        funExpr.name = new IdentExpr(input.clx, nameStr, funExpr.pos);
                 }
             }
 
             // Update lhs with the new value
-            lhsExpr = new BinOpExpr(op, lhsExpr, rhsExpr, lhsExpr.pos);
+            lhsExpr = new BinOpExpr(input.clx, op, lhsExpr, rhsExpr, lhsExpr.pos);
         }
 
         // If this is a unary operator
@@ -824,7 +824,7 @@ ASTExpr parseExpr(TokenStream input, int minPrec = 0)
             input.read();
 
             // Update lhs with the new value
-            lhsExpr = new UnOpExpr(op, lhsExpr, lhsExpr.pos);
+            lhsExpr = new UnOpExpr(input.clx, op, lhsExpr, lhsExpr.pos);
         }
 
         else
@@ -867,7 +867,7 @@ ASTExpr parseAtom(TokenStream input)
     else if (t.type == Token.SEP && t.stringVal == "[")
     {
         auto exprs = parseExprList(input, "[", "]");
-        return new ArrayExpr(exprs, pos);
+        return new ArrayExpr(input.clx, exprs, pos);
     }
 
     // Object literal
@@ -890,9 +890,9 @@ ASTExpr parseAtom(TokenStream input)
             if (auto strExpr = cast(StringExpr)nameExpr)
                 stringExpr = strExpr;
             else if (auto identExpr = cast(IdentExpr)nameExpr)
-                stringExpr = new StringExpr(identExpr.name, nameExpr.pos);
+                stringExpr = new StringExpr(input.clx, identExpr.name, nameExpr.pos);
             else if (auto intExpr = cast(IntExpr)nameExpr)
-                stringExpr = new StringExpr(to!wstring(intExpr.val), nameExpr.pos);
+                stringExpr = new StringExpr(input.clx, to!wstring(intExpr.val), nameExpr.pos);
 
             if (!stringExpr)
                 throw new ParseError("invalid property name", nameExpr.pos);
@@ -905,14 +905,14 @@ ASTExpr parseAtom(TokenStream input)
             values ~= [valueExpr];
         }
 
-        return new ObjectExpr(names, values, pos);
+        return new ObjectExpr(input.clx, names, values, pos);
     }
 
     // Regular expression literal
     else if (t.type == Token.REGEXP)
     {
         input.read();
-        return new RegexpExpr(t.regexpVal, t.flagsVal, pos);
+        return new RegexpExpr(input.clx, t.regexpVal, t.flagsVal, pos);
     }
 
     // New expression
@@ -922,14 +922,14 @@ ASTExpr parseAtom(TokenStream input)
         input.read();
 
         // Parse the base expression
-        auto op = findOperator(t.stringVal, 1, 'r');
+        auto op = input.clx.findOperator(t.stringVal, 1, 'r');
         auto baseExpr = parseExpr(input, op.prec);
 
         // Parse the argument list (if present, otherwise assumed empty)
         auto argExprs = input.peekSep("(")? parseExprList(input, "(", ")"):[];
 
         // Create the new expression
-        return new NewExpr(baseExpr, argExprs, t.pos);
+        return new NewExpr(input.clx, baseExpr, argExprs, t.pos);
     }
 
     // Function expression
@@ -946,28 +946,28 @@ ASTExpr parseAtom(TokenStream input)
 
         auto bodyStmt = parseStmt(input);
 
-        return new FunExpr(funcName, params, bodyStmt, pos);
+        return new FunExpr(input.clx, funcName, params, bodyStmt, pos);
     }
 
     // Identifier/symbol literal
     else if (t.type == Token.IDENT)
     {
         input.read();
-        return new IdentExpr(t.stringVal, pos);
+        return new IdentExpr(input.clx, t.stringVal, pos);
     }
 
     // Integer literal
     else if (t.type == Token.INT)
     {
         input.read();
-        return new IntExpr(t.intVal, pos);
+        return new IntExpr(input.clx, t.intVal, pos);
     }
 
     // Floating-point literal
     else if (t.type == Token.FLOAT)
     {
         input.read();
-        return new FloatExpr(t.floatVal, pos);
+        return new FloatExpr(input.clx, t.floatVal, pos);
     }
 
     // Floating-point literal starting with a period (eg: .5)
@@ -986,32 +986,32 @@ ASTExpr parseAtom(TokenStream input)
 
         // Re-parse the value as a float
         auto floatVal = to!float("0." ~ to!string(intTok.intVal));
-        return new FloatExpr(floatVal, pos);
+        return new FloatExpr(input.clx, floatVal, pos);
     }
 
     // String literal
     else if (t.type == Token.STRING)
     {
         input.read();
-        return new StringExpr(t.stringVal, pos);
+        return new StringExpr(input.clx, t.stringVal, pos);
     }
 
     // True boolean constant
     else if (input.matchKw("true"))
     {
-        return new TrueExpr(pos);
+        return new TrueExpr(input.clx, pos);
     }
 
     // False boolean constant
     else if (input.matchKw("false"))
     {
-        return new FalseExpr(pos);
+        return new FalseExpr(input.clx, pos);
     }
 
     // Null constant
     else if (input.matchKw("null"))
     {
-        return new NullExpr(pos);
+        return new NullExpr(input.clx, pos);
     }
 
     // Unary expressions
@@ -1019,7 +1019,7 @@ ASTExpr parseAtom(TokenStream input)
     {
         //writefln("unary op: %s", t.stringVal);
 
-        auto op = findOperator(t.stringVal, 1, 'r');
+        auto op = input.clx.findOperator(t.stringVal, 1, 'r');
         if (!op)
         {
             throw new ParseError(
@@ -1041,15 +1041,15 @@ ASTExpr parseAtom(TokenStream input)
             {
                 // Negative zero cannot be represented as integer
                 if (intExpr.val is 0)
-                    return new FloatExpr(-0.0, intExpr.pos);
+                    return new FloatExpr(input.clx, -0.0, intExpr.pos);
 
                 // Negate the integer value
-                return new IntExpr(-intExpr.val, intExpr.pos);
+                return new IntExpr(input.clx, -intExpr.val, intExpr.pos);
             }
         }
 
         // Return the unary expression
-        return new UnOpExpr(op, expr, pos);
+        return new UnOpExpr(input.clx, op, expr, pos);
     }
 
     throw new ParseError("unexpected token: " ~ t.toString(), pos);
@@ -1082,7 +1082,7 @@ ASTExpr[] parseExprList(TokenStream input, wstring openSep, wstring closeSep)
 
             if (input.peekSep(",")) 
             {
-                exprs ~= new IdentExpr("undefined", input.getPos());
+                exprs ~= new IdentExpr(input.clx, "undefined", input.getPos());
                 continue;
             }
         }
